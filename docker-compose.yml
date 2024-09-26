@@ -1,0 +1,35 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: ./bot/Dockerfile
+    container_name: telegram_bot
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - COMBINED_CA_PATH=/app/certs/combined_ca.crt
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    command: python /app/main.py
+    restart: always
+
+  db:
+    image: postgres:13
+    container_name: postgres_bot
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  pgdata:
