@@ -8,35 +8,57 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from bot.config import BOT_TOKEN
 from bot.handlers import router
 from utils.parser import parse_all_urls
+from data.database import setup_db
+from utils.gigachat_service import check_gigachat_credentials
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def start_parsing():
-    """Функция для старта асинхронного парсинга в фоне"""
-    print("Starting data parsing in background...")
-    await parse_all_urls()  # Асинхронно выполняем парсинг
+    """Функция для запуска асинхронного парсинга в фоне"""
+    logger.info("Starting data parsing in background...")
+    await parse_all_urls()
+    logger.info("Data parsing completed.")
 
 
 async def main():
     """Запуск бота и диспетчера"""
-    logging.basicConfig(level=logging.INFO)
     session = AiohttpSession()
 
-    # Используем DefaultBotProperties для указания parse_mode
+    # Инициализация базы данных перед запуском бота
+    logger.info("Initializing database...")
+    await setup_db()
+    logger.info("Database initialized.")
+
+    # Проверка учетных данных GigaChat
+    logger.info("Checking GigaChat credentials...")
+    if not await check_gigachat_credentials():
+        logger.error("GigaChat credentials are invalid or not set. Please check your .env file.")
+        return
+
+    # Создание экземпляра бота
     bot = Bot(
         token=BOT_TOKEN,
         session=session,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
 
+    # Создание диспетчера
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
 
-    # Запускаем парсинг данных как фоновую задачу
-    asyncio.create_task(start_parsing())
+    # Запуск парсинга данных как фоновую задачу
+    await asyncio.create_task(start_parsing())
 
-    # Запускаем бота
+    # Запуск бота
+    logger.info("Starting polling...")
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Bot stopped!")
