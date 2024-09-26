@@ -1,21 +1,24 @@
-from gigachat import GigaChat
+import aiohttp
 from bot.config import GIGACHAT_API_KEY
-import json
 
 
+# Асинхронная функция для отправки запроса в GigaChat API
 async def generate_answer(question, context):
-    """
-    Асинхронная генерация ответа с использованием GigaChat API.
-    """
-    async with GigaChat(credentials=GIGACHAT_API_KEY, verify_ssl_certs=False) as giga:
-        prompt = f"Вопрос: {question}\nКонтекст: {context}"
-        response = await giga.chat(prompt)
-        return response.choices[0].message.content
+    url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GIGACHAT_API_KEY}",
+        "Content-Type": "application/json"
+    }
 
+    payload = {
+        "model": "GigaChat",
+        "messages": [
+            {"role": "system", "content": f"Контекст: {context}"},
+            {"role": "user", "content": question}
+        ]
+    }
 
-def load_sources():
-    """
-    Загрузка контента из sources.json для формирования базы знаний.
-    """
-    with open("data/sources.json", "r", encoding="utf-8") as file:
-        return json.load(file)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=payload, headers=headers) as response:
+            result = await response.json()
+            return result["choices"][0]["message"]["content"]
