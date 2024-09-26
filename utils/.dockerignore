@@ -1,0 +1,13 @@
+node_modules
+__pycache__
+*.pyc
+.env
+*.log
+.git
+docker-compose.yml
+.dockerignore
+venv
+*.tmp
+*.swp
+.DS_Store
+ignore-this
