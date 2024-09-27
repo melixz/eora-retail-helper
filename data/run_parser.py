@@ -1,6 +1,6 @@
 import asyncio
 from data.database import setup_db  # Добавлено импорт функции setup_db
-from utils.parser import parse_all_urls
+from data.parser import parse_all_urls
 
 
 async def main():

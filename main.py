@@ -7,7 +7,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from bot.config import BOT_TOKEN
 from bot.handlers import router
-from utils.parser import parse_all_urls
+from data.parser import parse_all_urls
 from data.database import setup_db
 
 # Настройка логирования

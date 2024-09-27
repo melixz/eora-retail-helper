@@ -1,5 +1,5 @@
 import asyncio
-from utils.gigachat_response import generate_answer  # Импортируем функцию генерации ответа
+from ml.gigachat_response import generate_answer
 
 
 # Основная логика, вызов необходимых функций

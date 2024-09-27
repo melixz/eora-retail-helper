@@ -3,7 +3,7 @@ import html
 import re
 import logging
 from collections import Counter
-from utils.gigachat_auth import get_access_token  # Импортируем функцию получения токена
+from ml.gigachat_auth import get_access_token  # Импортируем функцию получения токена
 from utils.ssl_utils import create_ssl_context  # Импортируем функцию для создания SSL контекста
 
 # Настройка логирования

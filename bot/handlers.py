@@ -2,7 +2,7 @@ import logging
 from aiogram import types
 from aiogram.filters import Command
 from bot.bot import router
-from utils.gigachat_service import generate_answer
+from ml.gigachat_service import generate_answer
 from data.database import fetch_context_from_db
 
 # Настройка логирования
