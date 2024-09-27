@@ -88,6 +88,9 @@ CATEGORIES = {
 
 
 def get_random_services():
+    """
+    Возвращает случайное описание услуги и URL из списка категорий.
+    """
     category, data = random.choice(list(CATEGORIES.items()))
     random_url = random.choice(data['urls'])
     return data['description'], random_url

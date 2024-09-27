@@ -3,19 +3,20 @@ import html
 import re
 import logging
 from collections import Counter
-from ml.gigachat_auth import get_access_token  # Импортируем функцию получения токена
-from utils.ssl_utils import create_ssl_context  # Импортируем функцию для создания SSL контекста
+from llm.gigachat_auth import get_access_token
+from utils.ssl_utils import create_ssl_context
 
-# Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
-# Функция для генерации ответа с гиперссылками
 async def generate_answer(question, context_with_urls, used_urls):
+    """
+    Генерирует ответ на основе вопроса и контекста с URL. Ограничивает количество ссылок до трех.
+    """
     url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
-
     access_token = await get_access_token()
+
     if not access_token:
         return "Не удалось получить доступ к сервису."
 
@@ -32,11 +33,7 @@ async def generate_answer(question, context_with_urls, used_urls):
 
     system_message = (
         "Ты — помощник по продуктам компании EORA. "
-        "Отвечай на вопросы пользователей только на основе предоставленного контекста. "
-        "Когда тебя спрашивают о дополнительных примерах (такие как 'еще', 'а еще?'), всегда давай 2 новых примера услуг и связанных с ними ссылок. "
-        "Ты не должен добавлять информацию, отсутствующую в контексте. "
-        "Не повторяй уже показанные примеры. "
-        "Сохраняй последовательность и структуру, не больше 3 примеров за ответ."
+        "Отвечай на вопросы пользователей только на основе предоставленного контекста."
     )
 
     payload = {
@@ -53,7 +50,7 @@ async def generate_answer(question, context_with_urls, used_urls):
         try:
             async with session.post(url, json=payload, headers=headers, ssl=ssl_context) as response:
                 if response.status != 200:
-                    logger.error(f"Error: Received status code {response.status} from GigaChat API")
+                    logger.error(f"Error: Received status code {response.status}")
                     text = await response.text()
                     logger.error(f"Response: {text}")
                     return "Извините, произошла ошибка при обработке вашего запроса."
@@ -63,8 +60,7 @@ async def generate_answer(question, context_with_urls, used_urls):
                 answer = html.escape(answer)
                 sentences = re.split(r'(?<=[.!?])\s+', answer)
 
-                # Сюда будем сохранять ссылки, которые еще не использовались
-                new_urls = []
+                new_urls = []  # Сюда сохраняются ссылки, которые еще не использовались
 
                 def extract_keywords(text):
                     words = re.findall(r'\w+', text.lower())
@@ -72,7 +68,7 @@ async def generate_answer(question, context_with_urls, used_urls):
 
                 new_sentences = []
                 for idx, sentence in enumerate(sentences):
-                    if len(new_urls) >= 3:  # Ограничиваем количество ссылок до 3
+                    if len(new_urls) >= 3:
                         break
 
                     max_similarity = 0
@@ -92,9 +88,7 @@ async def generate_answer(question, context_with_urls, used_urls):
                         new_urls.append(best_url)
                     new_sentences.append(sentence)
 
-                answer_with_links = ' '.join(new_sentences)
-
-                return answer_with_links
+                return ' '.join(new_sentences)
 
         except aiohttp.ClientConnectorError as e:
             logger.error(f"Connection error: {e}")

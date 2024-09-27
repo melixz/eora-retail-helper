@@ -1,9 +1,11 @@
 import asyncio
-from ml.gigachat_response import generate_answer
+from llm.gigachat_response import generate_answer
 
 
-# Основная логика, вызов необходимых функций
 async def main():
+    """
+    Основная логика вызова функции генерации ответа от GigaChat API.
+    """
     question = "Что такое искусственный интеллект?"
     context = [("Вы - эксперт по искусственному интеллекту.", "https://example.com/ai_article")]
     answer = await generate_answer(question, context)

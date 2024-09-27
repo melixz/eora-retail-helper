@@ -7,11 +7,9 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from bot.config import BOT_TOKEN
 from bot.handlers import router
-from data.parser import parse_all_urls
 from data.database import setup_db
-from aiogram.types import BotCommand  # Для регистрации команд
+from aiogram.types import BotCommand
 
-# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -26,15 +24,8 @@ async def set_bot_commands(bot: Bot):
     await bot.set_my_commands(commands)
 
 
-async def start_parsing():
-    """Функция для запуска асинхронного парсинга в фоне"""
-    logger.info("Starting data parsing in background...")
-    await parse_all_urls()
-    logger.info("Data parsing completed.")
-
-
-async def main():
-    """Запуск бота и диспетчера"""
+async def start_bot():
+    """Запускает Telegram-бота."""
     session = AiohttpSession()
 
     # Инициализация базы данных перед запуском бота
@@ -56,12 +47,18 @@ async def main():
     # Регистрация быстрых команд в меню
     await set_bot_commands(bot)
 
-    # Запуск парсинга данных как фоновую задачу
-    await asyncio.create_task(start_parsing())
-
     # Запуск бота
     logger.info("Starting polling...")
     await dp.start_polling(bot)
+
+
+async def main():
+    """Основная функция для запуска бота и, при необходимости, парсера."""
+    # Запуск базы данных
+    await setup_db()
+
+    # Запуск бота
+    await start_bot()
 
 
 if __name__ == "__main__":

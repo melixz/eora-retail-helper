@@ -1,11 +1,12 @@
 import asyncio
-from data.database import setup_db  # Добавлено импорт функции setup_db
+from data.database import setup_db
 from data.parser import parse_all_urls
 
 
-async def main():
+async def run_parser():
+    """Запускает парсер с предварительной инициализацией базы данных."""
     print("Initializing database...")
-    await setup_db()  # Добавлено вызов setup_db()
+    await setup_db()
     print("Database initialized.")
 
     print("Starting data parsing...")
@@ -14,4 +15,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_parser())

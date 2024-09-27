@@ -3,42 +3,45 @@ import aiohttp
 import logging
 from bs4 import BeautifulSoup
 from data.database import save_data_to_db
-from utils.url_data import URLS_TO_PARSE  # Импортируем URL для парсинга
+from utils.url_data import URLS_TO_PARSE
 import re
 
-# Настройка логирования
 logger = logging.getLogger(__name__)
 
 
-# Асинхронная функция для парсинга страницы и сохранения данных
 async def parse_and_save(session, url):
+    """
+    Парсит страницу по заданному URL, очищает текст и сохраняет его в базу данных.
+    """
     try:
         async with session.get(url) as response:
             if response.status == 200:
                 content = await response.text()
                 soup = BeautifulSoup(content, 'html.parser')
-                # Извлечение текста со страницы
                 parsed_text = soup.get_text(separator=' ', strip=True)
                 cleaned_text = clean_text(parsed_text)
                 await save_data_to_db(url, cleaned_text)
-                logger.info(f"Saved content from {url}")
+                logger.info(f"Сохранен контент с {url}")
             else:
-                logger.warning(f"Failed to fetch {url}: Status {response.status}")
+                logger.warning(f"Не удалось получить данные с {url}: Статус {response.status}")
     except Exception as e:
-        logger.error(f"Error fetching {url}: {e}")
+        logger.error(f"Ошибка при получении данных с {url}: {e}")
 
 
-# Функция для очистки текста
 def clean_text(text):
-    # Удаляем лишние пробелы и символы переноса строки
+    """
+    Очищает текст, удаляя лишние пробелы и символы переноса строки.
+    """
     text = re.sub(r'\s+', ' ', text)
     return text.strip()
 
 
-# Асинхронная функция для парсинга всех ссылок из списка
 async def parse_all_urls():
-    logger.info("Starting to parse all URLs")
+    """
+    Запускает процесс парсинга всех URL из списка.
+    """
+    logger.info("Начало парсинга всех URL")
     async with aiohttp.ClientSession() as session:
-        tasks = [parse_and_save(session, url) for url in URLS_TO_PARSE]  # Используем URL из url_data.py
+        tasks = [parse_and_save(session, url) for url in URLS_TO_PARSE]
         await asyncio.gather(*tasks)
-    logger.info("Completed parsing all URLs")
+    logger.info("Парсинг всех URL завершен")
