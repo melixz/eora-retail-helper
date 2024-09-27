@@ -22,6 +22,29 @@ async def start_command(message: types.Message):
     await message.answer("Привет! Я могу помочь ответить на вопросы о наших проектах и возможностях для ритейлеров.")
 
 
+# Обработчик команды /help
+async def help_command(message: types.Message):
+    logger.info(f"Received /help command from user {message.from_user.id}")
+
+    await message.answer("Я могу помочь ответить на следующие вопросы:\n"
+                         "1. Что вы можете сделать для ритейлеров?\n"
+                         "2. Хочу с вами сотрудничать!\n"
+                         "3. Как с вами связаться?")
+
+
+# Обработчик команды /contact
+async def contact_command(message: types.Message):
+    logger.info(f"Received /contact command from user {message.from_user.id}")
+
+    contact_info = (
+        "Свяжитесь с нами по следующему адресу:\n"
+        "📧 Email: info@eora.ru\n"
+        "📞 Телефон: +7 (495) 123-45-67\n"
+        "🌍 Подробнее: https://eora.ru/contacts"
+    )
+    await message.answer(contact_info)  # Один вызов для отправки всех контактных данных
+
+
 # Обработчик текстовых вопросов
 async def handle_question(message: types.Message):
     user_id = message.from_user.id
@@ -55,4 +78,6 @@ async def handle_question(message: types.Message):
 
 # Регистрируем обработчики команд и сообщений
 router.message.register(start_command, Command(commands=['start']))
-router.message.register(handle_question)
+router.message.register(help_command, Command(commands=['help']))
+router.message.register(contact_command, Command(commands=['contact']))
+router.message.register(handle_question)  # Обработчик текстовых вопросов должен быть последним

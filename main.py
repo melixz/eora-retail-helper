@@ -9,10 +9,21 @@ from bot.config import BOT_TOKEN
 from bot.handlers import router
 from data.parser import parse_all_urls
 from data.database import setup_db
+from aiogram.types import BotCommand  # Для регистрации команд
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+async def set_bot_commands(bot: Bot):
+    """Регистрация команд для быстрого доступа в меню Telegram."""
+    commands = [
+        BotCommand(command="/start", description="Запустить бота"),
+        BotCommand(command="/help", description="Показать вопросы для бота"),
+        BotCommand(command="/contact", description="Контактные данные компании")
+    ]
+    await bot.set_my_commands(commands)
 
 
 async def start_parsing():
@@ -41,6 +52,9 @@ async def main():
     # Создание диспетчера
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
+
+    # Регистрация быстрых команд в меню
+    await set_bot_commands(bot)
 
     # Запуск парсинга данных как фоновую задачу
     await asyncio.create_task(start_parsing())
