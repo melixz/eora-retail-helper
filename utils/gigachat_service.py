@@ -1,10 +1,12 @@
 import os
 import aiohttp
 import ssl
-import certifi
 import logging
 import base64
+import html
+import re
 from dotenv import load_dotenv
+from collections import Counter
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -20,10 +22,10 @@ COMBINED_CA_PATH = os.getenv('COMBINED_CA_PATH')
 
 # Проверка наличия необходимых данных
 if not all([GIGACHAT_CLIENT_ID, GIGACHAT_CLIENT_SECRET, COMBINED_CA_PATH]):
-    raise ValueError(
-        "Необходимо указать GIGACHAT_CLIENT_ID, GIGACHAT_CLIENT_SECRET, COMBINED_CA_PATH в .env файле.")
+    raise ValueError("Необходимо указать GIGACHAT_CLIENT_ID, GIGACHAT_CLIENT_SECRET, COMBINED_CA_PATH в .env файле.")
 
 
+# Функция для создания SSL контекста
 def create_ssl_context():
     ssl_context = ssl.create_default_context()
     ssl_context.load_verify_locations(cafile=COMBINED_CA_PATH)
@@ -32,6 +34,7 @@ def create_ssl_context():
     return ssl_context
 
 
+# Функция для получения токена доступа
 async def get_access_token():
     url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
     auth = base64.b64encode(f"{GIGACHAT_CLIENT_ID}:{GIGACHAT_CLIENT_SECRET}".encode()).decode()
@@ -61,7 +64,8 @@ async def get_access_token():
             return None
 
 
-async def generate_answer(question, context):
+# Новая улучшенная функция для генерации ответа с гиперссылками в тексте
+async def generate_answer(question, context_with_urls):
     url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
 
     access_token = await get_access_token()
@@ -73,10 +77,24 @@ async def generate_answer(question, context):
         "Content-Type": "application/json"
     }
 
+    # Формируем контекст для LLM
+    context_parts = [content for content, url in context_with_urls]
+    context = "\n\n".join(context_parts)
+
+    if not context:
+        return "Ошибка: контекст пуст или некорректен."
+
+    # Формируем системное сообщение для LLM
+    system_message = (
+        "Ты — помощник по продуктам компании EORA. Используя только предоставленный контекст ниже, ответь на вопрос пользователя. "
+        "Ты не должен добавлять информацию, отсутствующую в контексте. "
+        "Не вставляй ссылки или номера источников в ответе; просто предоставь информативный ответ."
+    )
+
     payload = {
         "model": "GigaChat",
         "messages": [
-            {"role": "system", "content": f"Контекст: {context}"},
+            {"role": "system", "content": f"{system_message}\n\nКонтекст:\n{context}"},
             {"role": "user", "content": question}
         ]
     }
@@ -93,7 +111,48 @@ async def generate_answer(question, context):
                     return "Извините, произошла ошибка при обработке вашего запроса."
                 result = await response.json()
                 logger.info(f"GigaChat API response: {result}")
-                return result["choices"][0]["message"]["content"]
+
+                # Получаем ответ от LLM
+                answer = result["choices"][0]["message"]["content"]
+
+                # Экранируем специальные символы в ответе
+                answer = html.escape(answer)
+
+                # Разбиваем ответ на предложения
+                sentences = re.split(r'(?<=[.!?])\s+', answer)
+
+                # Подготавливаем контент и URL из контекста
+                context_urls = [url for content, url in context_with_urls]
+
+                # Функция для нахождения ключевых слов в контексте
+                def extract_keywords(text):
+                    words = re.findall(r'\w+', text.lower())
+                    return Counter(words)
+
+                # Улучшенная логика привязки предложений к контекстам
+                new_sentences = []
+                for idx, sentence in enumerate(sentences):
+                    max_similarity = 0
+                    best_url = None
+                    sentence_keywords = extract_keywords(sentence)  # Извлекаем ключевые слова из предложения
+                    for content, url in context_with_urls:
+                        content_keywords = extract_keywords(content)  # Извлекаем ключевые слова из контента
+                        common_words = sentence_keywords & content_keywords
+                        similarity = sum(common_words.values())  # Суммируем количество совпадающих ключевых слов
+                        if similarity > max_similarity:
+                            max_similarity = similarity
+                            best_url = url
+                    if best_url and max_similarity > 0:
+                        # Добавляем гиперссылку вместо номера
+                        escaped_url = html.escape(best_url, quote=True)
+                        sentence = f'{sentence} <a href="{escaped_url}">[{idx + 1}]</a>'
+                    new_sentences.append(sentence)
+
+                # Воссоздаем ответ с гиперссылками
+                answer_with_links = ' '.join(new_sentences)
+
+                return answer_with_links
+
         except aiohttp.ClientConnectorError as e:
             logger.error(f"Connection error: {e}")
             return "Извините, не удалось подключиться к сервису обработки запросов."

@@ -44,7 +44,7 @@ async def save_data_to_db(url, content):
         logger.exception(f"Error saving data to DB for URL {url}: {e}")
 
 
-async def fetch_context_from_db(question, limit=3):
+async def fetch_context_from_db(question, limit=5):
     try:
         conn = await asyncpg.connect(
             user=os.getenv('POSTGRES_USER'),
@@ -53,14 +53,31 @@ async def fetch_context_from_db(question, limit=3):
             host=os.getenv('POSTGRES_HOST', 'db'),
             port=int(os.getenv('POSTGRES_PORT', 5432))
         )
-        rows = await conn.fetch('SELECT content FROM sources ORDER BY id DESC LIMIT $1', limit)
+        # Используем полнотекстовый поиск по вопросу
+        rows = await conn.fetch('''
+            SELECT content, url
+            FROM sources
+            WHERE to_tsvector('russian', content) @@ plainto_tsquery('russian', $1)
+            LIMIT $2
+        ''', question, limit)
+
         await conn.close()
 
-        # Создаём контекст из данных
-        context = "\n".join([row['content'] for row in rows])
-        limited_context = context[:1000]  # Ограничиваем общую длину контекста до 1000 символов
-        logger.debug(f"Fetched context (limited to 1000 chars): {limited_context}")
-        return limited_context
+        if not rows:
+            # Если нет результатов, возвращаем последние добавленные источники
+            logger.info("No relevant context found, fetching recent sources.")
+            conn = await asyncpg.connect(
+                user=os.getenv('POSTGRES_USER'),
+                password=os.getenv('POSTGRES_PASSWORD'),
+                database=os.getenv('POSTGRES_DB'),
+                host=os.getenv('POSTGRES_HOST', 'db'),
+                port=int(os.getenv('POSTGRES_PORT', 5432))
+            )
+            rows = await conn.fetch('SELECT content, url FROM sources ORDER BY id DESC LIMIT $1', limit)
+            await conn.close()
+
+        context_with_urls = [(row['content'][:500], row['url']) for row in rows]  # Ограничиваем длину контента
+        return context_with_urls
     except Exception as e:
         logger.exception(f"Error fetching context from DB: {e}")
-        return ""
+        return []
