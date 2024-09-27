@@ -9,7 +9,6 @@ from bot.config import BOT_TOKEN
 from bot.handlers import router
 from utils.parser import parse_all_urls
 from data.database import setup_db
-from utils.gigachat_service import check_gigachat_credentials
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -31,12 +30,6 @@ async def main():
     logger.info("Initializing database...")
     await setup_db()
     logger.info("Database initialized.")
-
-    # Проверка учетных данных GigaChat
-    logger.info("Checking GigaChat credentials...")
-    if not await check_gigachat_credentials():
-        logger.error("GigaChat credentials are invalid or not set. Please check your .env file.")
-        return
 
     # Создание экземпляра бота
     bot = Bot(
