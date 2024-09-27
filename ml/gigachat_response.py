@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 # Функция для генерации ответа с гиперссылками
-async def generate_answer(question, context_with_urls):
+async def generate_answer(question, context_with_urls, used_urls):
     url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
 
     access_token = await get_access_token()
@@ -31,9 +31,12 @@ async def generate_answer(question, context_with_urls):
         return "Ошибка: контекст пуст или некорректен."
 
     system_message = (
-        "Ты — помощник по продуктам компании EORA. Используя только предоставленный контекст ниже, ответь на вопрос пользователя. "
+        "Ты — помощник по продуктам компании EORA. "
+        "Отвечай на вопросы пользователей только на основе предоставленного контекста. "
+        "Когда тебя спрашивают о дополнительных примерах (такие как 'еще', 'а еще?'), всегда давай 2 новых примера услуг и связанных с ними ссылок. "
         "Ты не должен добавлять информацию, отсутствующую в контексте. "
-        "Не вставляй ссылки или номера источников в ответе; просто предоставь информативный ответ."
+        "Не повторяй уже показанные примеры. "
+        "Сохраняй последовательность и структуру, не больше 3 примеров за ответ."
     )
 
     payload = {
@@ -60,7 +63,8 @@ async def generate_answer(question, context_with_urls):
                 answer = html.escape(answer)
                 sentences = re.split(r'(?<=[.!?])\s+', answer)
 
-                context_urls = [url for content, url in context_with_urls]
+                # Сюда будем сохранять ссылки, которые еще не использовались
+                new_urls = []
 
                 def extract_keywords(text):
                     words = re.findall(r'\w+', text.lower())
@@ -68,6 +72,9 @@ async def generate_answer(question, context_with_urls):
 
                 new_sentences = []
                 for idx, sentence in enumerate(sentences):
+                    if len(new_urls) >= 3:  # Ограничиваем количество ссылок до 3
+                        break
+
                     max_similarity = 0
                     best_url = None
                     sentence_keywords = extract_keywords(sentence)
@@ -75,12 +82,14 @@ async def generate_answer(question, context_with_urls):
                         content_keywords = extract_keywords(content)
                         common_words = sentence_keywords & content_keywords
                         similarity = sum(common_words.values())
-                        if similarity > max_similarity:
+                        if similarity > max_similarity and url not in used_urls:
                             max_similarity = similarity
                             best_url = url
-                    if best_url and max_similarity > 0:
+
+                    if best_url and max_similarity > 0 and best_url not in new_urls:
                         escaped_url = html.escape(best_url, quote=True)
-                        sentence = f'{sentence} <a href="{escaped_url}">[{idx + 1}]</a>'
+                        sentence = f'{sentence} <a href="{escaped_url}">[{len(new_urls) + 1}]</a>'
+                        new_urls.append(best_url)
                     new_sentences.append(sentence)
 
                 answer_with_links = ' '.join(new_sentences)

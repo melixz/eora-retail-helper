@@ -17,7 +17,7 @@ async def start_command(message: types.Message):
     logger.info(f"Received /start command from user {message.from_user.id}")
 
     # Инициализация сессии пользователя
-    user_sessions[message.from_user.id] = {"started": True, "context": []}
+    user_sessions[message.from_user.id] = {"started": True, "context": [], "used_urls": []}
 
     await message.answer("Привет! Я могу помочь ответить на вопросы о наших проектах и возможностях для ритейлеров.")
 
@@ -41,8 +41,13 @@ async def handle_question(message: types.Message):
     # Сохраняем контекст в сессии
     user_sessions[user_id]["context"].extend(context_with_urls)
 
-    # Генерация ответа с учетом прикрепления ссылок
-    answer = await generate_answer(user_question, context_with_urls)
+    # Генерация ответа с учетом прикрепления ссылок и ранее использованных
+    used_urls = user_sessions[user_id].get("used_urls", [])
+    answer = await generate_answer(user_question, context_with_urls, used_urls)
+
+    # Обновляем список использованных ссылок в сессии
+    user_sessions[user_id]["used_urls"].extend(context_with_urls)
+
     logger.info(f"Sending answer to user {user_id}")
 
     await message.answer(answer)
