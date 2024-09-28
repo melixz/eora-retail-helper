@@ -52,6 +52,7 @@
 - Python 3.11+
 - aiogram: для создания Telegram-бота
 - SQLAlchemy: для работы с базой данных PostgreSQL
+- alembic: для миграции базы данных
 - BeautifulSoup: для парсинга веб-страниц
 - GigaChat: для генерации ответов на основе LLM
 - Docker и Docker-compose: для контейнеризации приложения

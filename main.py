@@ -7,8 +7,9 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from bot.config import BOT_TOKEN
 from bot.handlers import router
-from data.database import setup_db
+from data.session import init_db
 from aiogram.types import BotCommand
+from data.parser import parse_all_urls  # Импортируем функцию парсинга
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,8 +31,13 @@ async def start_bot():
 
     # Инициализация базы данных перед запуском бота
     logger.info("Initializing database...")
-    await setup_db()
+    await init_db()
     logger.info("Database initialized.")
+
+    # Запуск процесса парсинга URL
+    logger.info("Starting URL parsing...")
+    await parse_all_urls()
+    logger.info("URL parsing completed.")
 
     # Создание экземпляра бота
     bot = Bot(
@@ -53,9 +59,10 @@ async def start_bot():
 
 
 async def main():
-    """Основная функция для запуска бота и, при необходимости, парсера."""
-    # Запуск базы данных
-    await setup_db()
+    """Основная функция для запуска бота и парсера."""
+    # Запуск базы данных и парсера
+    await init_db()
+    await parse_all_urls()  # Добавляем вызов парсинга перед запуском бота
 
     # Запуск бота
     await start_bot()
