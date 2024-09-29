@@ -1,6 +1,4 @@
-import random
-
-# Список ссылок
+# Список всех ссылок
 URLS_TO_PARSE = [
     "https://eora.ru/cases/promyshlennaya-bezopasnost",
     "https://eora.ru/cases/lamoda-systema-segmentacii-i-poiska-po-pohozhey-odezhde",
@@ -85,12 +83,3 @@ CATEGORIES = {
         "description": "компьютерное зрение и нейросети для распознавания изображений"
     }
 }
-
-
-def get_random_services():
-    """
-    Возвращает случайное описание услуги и URL из списка категорий.
-    """
-    category, data = random.choice(list(CATEGORIES.items()))
-    random_url = random.choice(data['urls'])
-    return data['description'], random_url

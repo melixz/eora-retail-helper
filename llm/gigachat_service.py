@@ -6,9 +6,17 @@ async def main():
     """
     Основная логика вызова функции генерации ответа от GigaChat API.
     """
-    question = "Что такое искусственный интеллект?"
-    context = [("Вы - эксперт по искусственному интеллекту.", "https://example.com/ai_article")]
-    answer = await generate_answer(question, context)
+    question = "Что вы можете предложить ритейлерам?"
+    context = [
+        ("Чат-боты для бизнеса могут быть полезны для общения с клиентами и автоматизации поддержки.",
+         "https://eora.ru/cases/chat-boty/purina-friskies-chat-bot-na-sajte"),
+        ("Автоматизация процессов с помощью нейросетей повышает эффективность работы.",
+         "https://eora.ru/cases/qiwi-poisk-anomalij")
+    ]
+
+    used_urls = set()
+    answer = await generate_answer(question, context, used_urls)
+
     print(f"Вопрос: {question}")
     print(f"Ответ: {answer}")
 

@@ -9,7 +9,6 @@ from utils.ssl_utils import create_ssl_context
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Глобальные переменные для отслеживания использованных ссылок
 used_urls_global = set()
 
 
@@ -53,8 +52,11 @@ async def generate_answer(question, context_with_urls, used_urls):
 
     system_message = (
         "Ты — виртуальный помощник компании EORA. "
-        "Твоя задача — предлагать услуги компании для ритейлеров, основываясь на имеющемся контексте. "
-        "Ограничь количество услуг до трех в одном ответе."
+        "Твоя задача — предлагать услуги компании строго в рамках запроса, основываясь на предоставленном контексте. "
+        "Предлагай услуги для розничных торговцев, избегая использования неподтверждённых данных или выдуманных предложений. "
+        "Ответы должны быть краткими, точными и релевантными. "
+        "Используй только релевантные ссылки на сайт EORA. Если таких ссылок нет — не добавляй их. "
+        "Если подходящие ссылки или услуги отсутствуют, лучше пропустить это, чем добавлять нерелевантные данные."
     )
 
     payload = {
@@ -78,7 +80,6 @@ async def generate_answer(question, context_with_urls, used_urls):
                 result = await response.json()
                 answer = result["choices"][0]["message"]["content"]
 
-                # Экранируем специальные HTML-символы
                 answer = html.escape(answer)
                 sentences = re.split(r'(?<=[.!?])\s+', answer)
 
@@ -107,7 +108,6 @@ async def generate_answer(question, context_with_urls, used_urls):
 
                     if best_url and max_similarity > 0 and best_url not in new_urls:
                         escaped_url = html.escape(best_url, quote=True)
-                        # Вставляем ссылку только один раз
                         if f'<code>[{len(new_urls) + 1}]</code>' not in sentence:
                             sentence = f'{sentence} <code>[{len(new_urls) + 1}]</code>'
                         new_urls.append((len(new_urls) + 1, escaped_url))
@@ -117,13 +117,10 @@ async def generate_answer(question, context_with_urls, used_urls):
 
                 formatted_answer = ' '.join(new_sentences)
 
-                # Удаляем лишние цифры перед и после гиперссылок
                 formatted_answer = remove_extra_digits_around_links(formatted_answer)
 
-                # Применяем валидацию форматирования текста
                 formatted_answer = validate_formatting(formatted_answer)
 
-                # Удаляем заголовки, оформленные жирным текстом
                 formatted_answer = re.sub(r'\*\*(.*?)\*\*', r'\1', formatted_answer)
                 formatted_answer = re.sub(r'<b>(.*?)</b>', r'\1', formatted_answer)
 

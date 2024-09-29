@@ -1,12 +1,12 @@
 import asyncio
-from data.database import setup_db
+from data.session import init_db
 from data.parser import parse_all_urls
 
 
 async def run_parser():
     """Запускает парсер с предварительной инициализацией базы данных."""
     print("Initializing database...")
-    await setup_db()
+    await init_db()
     print("Database initialized.")
 
     print("Starting data parsing...")
