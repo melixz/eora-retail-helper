@@ -3,8 +3,8 @@ import html
 import re
 import logging
 from collections import Counter
-from llm.gigachat_auth import get_access_token
-from utils.ssl_utils import create_ssl_context
+from app.llm.gigachat_auth import get_access_token
+from app.utils.ssl_utils import create_ssl_context
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

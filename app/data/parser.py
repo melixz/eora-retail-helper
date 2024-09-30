@@ -5,9 +5,9 @@ from bs4 import BeautifulSoup
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from data.models.source import Source  # Импорт модели для таблицы sources
-from data.session import engine  # Импорт сессии и функции для получения сессии
-from utils.url_data import URLS_TO_PARSE  # Импорт списка URL для парсинга
+from app.data.models.source import Source  # Импорт модели для таблицы sources
+from app.data.session import engine  # Импорт сессии и функции для получения сессии
+from app.utils.url_data import URLS_TO_PARSE  # Импорт списка URL для парсинга
 import re
 
 logging.basicConfig(level=logging.INFO)

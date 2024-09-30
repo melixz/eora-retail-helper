@@ -5,11 +5,11 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from bot.config import BOT_TOKEN
-from bot.handlers import router
-from data.session import init_db
+from app.bot.config import BOT_TOKEN
+from app.bot.handlers import router
+from app.data.session import init_db
 from aiogram.types import BotCommand
-from data.parser import parse_all_urls  # Импортируем функцию парсинга
+from app.data.parser import parse_all_urls  # Импортируем функцию парсинга
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

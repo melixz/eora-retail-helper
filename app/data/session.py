@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select
-from bot.config import DATABASE_URL  # Импортируем строку подключения
-from data.models.base import Base
-from data.models.source import Source
+from app.bot.config import DATABASE_URL  # Импортируем строку подключения
+from app.data.models.base import Base
+from app.data.models.source import Source
 
 # Создание движка для асинхронной работы с базой данных
 engine = create_async_engine(DATABASE_URL, echo=True)

@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN apt-get update && apt-get install -y ca-certificates
 
 # Копируем сертификаты
-COPY ./certs/combined_ca.crt /app/certs/combined_ca.crt
+COPY app/certs/combined_ca.crt /app/certs/combined_ca.crt
 
 # Команда для запуска приложения
 CMD ["python", "/app/main.py"]

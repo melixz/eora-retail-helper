@@ -1,5 +1,5 @@
 import asyncio
-from llm.gigachat_response import generate_answer
+from app.llm.gigachat_response import generate_answer
 
 
 async def main():

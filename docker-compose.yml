@@ -2,20 +2,20 @@ services:
   bot:
     build:
       context: .
-      dockerfile: ./bot/Dockerfile
+      dockerfile: app/bot/Dockerfile
     container_name: telegram_bot
     env_file:
       - .env
     environment:
       - PYTHONPATH=/app
-      - COMBINED_CA_PATH=/app/certs/combined_ca.crt
+      - COMBINED_CA_PATH=/app/app/certs/combined_ca.crt
     depends_on:
       - db
     volumes:
       - .:/app
     ports:
       - "8000:8000"
-    command: python /app/main.py
+    command: python /app/app/main.py
     restart: always
 
   db:

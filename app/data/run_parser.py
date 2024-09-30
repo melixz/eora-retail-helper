@@ -1,6 +1,6 @@
 import asyncio
-from data.session import init_db
-from data.parser import parse_all_urls
+from app.data.session import init_db
+from app.data.parser import parse_all_urls
 
 
 async def run_parser():

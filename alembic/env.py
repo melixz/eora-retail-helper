@@ -2,8 +2,8 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
-from data.session import Base  # Подключаем модели
-from bot.config import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST  # Импортируем конфигурацию
+from app.data import Base  # Подключаем модели
+from app.bot.config import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST  # Импортируем конфигурацию
 
 # Устанавливаем строку подключения к базе данных
 DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:5432/{POSTGRES_DB}"

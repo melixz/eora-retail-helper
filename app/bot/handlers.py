@@ -1,9 +1,9 @@
 import logging
 from aiogram import types
 from aiogram.filters import Command
-from bot.bot import router
-from llm.gigachat_service import generate_answer
-from data.session import get_db, fetch_context_from_db
+from app.bot.bot import router
+from app.llm.gigachat_service import generate_answer
+from app.data.session import get_db, fetch_context_from_db
 
 logger = logging.getLogger(__name__)
 
