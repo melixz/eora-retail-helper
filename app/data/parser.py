@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
 
-async def parse_and_save(session: aiohttp.ClientSession, db_session: AsyncSession, url: str):
+async def parse_and_save(
+    session: aiohttp.ClientSession, db_session: AsyncSession, url: str
+):
     """
     Парсит страницу по заданному URL, очищает текст и сохраняет его в базу данных.
     """
@@ -31,15 +33,21 @@ async def parse_and_save(session: aiohttp.ClientSession, db_session: AsyncSessio
 
             if response.status == 200:
                 content = await response.text()
-                logger.info(f"Fetched content from {url}: {content[:100]}...")  # Ограничиваем вывод
-                soup = BeautifulSoup(content, 'html.parser')
-                parsed_text = soup.get_text(separator=' ', strip=True)
+                logger.info(
+                    f"Fetched content from {url}: {content[:100]}..."
+                )  # Ограничиваем вывод
+                soup = BeautifulSoup(content, "html.parser")
+                parsed_text = soup.get_text(separator=" ", strip=True)
                 cleaned_text = clean_text(parsed_text)
-                logger.info(f"Cleaned content from {url}: {cleaned_text[:100]}...")  # Ограничиваем вывод
+                logger.info(
+                    f"Cleaned content from {url}: {cleaned_text[:100]}..."
+                )  # Ограничиваем вывод
                 await save_data_to_db(db_session, url, cleaned_text)
                 logger.info(f"Successfully saved content from {url}")
             else:
-                logger.warning(f"Failed to fetch data from {url}: Status {response.status}")
+                logger.warning(
+                    f"Failed to fetch data from {url}: Status {response.status}"
+                )
     except Exception as e:
         logger.error(f"Error fetching data from {url}: {e}")
 
@@ -48,7 +56,7 @@ def clean_text(text: str) -> str:
     """
     Очищает текст, удаляя лишние пробелы и символы переноса строки.
     """
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 

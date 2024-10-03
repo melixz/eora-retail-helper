@@ -5,6 +5,7 @@ from app.data.models.base import Base
 
 class Source(Base):
     """Модель таблицы sources."""
+
     __tablename__ = "sources"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

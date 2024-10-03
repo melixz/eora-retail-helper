@@ -20,7 +20,7 @@ async def set_bot_commands(bot: Bot):
     commands = [
         BotCommand(command="/start", description="Запустить бота"),
         BotCommand(command="/help", description="Показать вопросы для бота"),
-        BotCommand(command="/contact", description="Контактные данные компании")
+        BotCommand(command="/contact", description="Контактные данные компании"),
     ]
     await bot.set_my_commands(commands)
 
@@ -43,7 +43,7 @@ async def start_bot():
     bot = Bot(
         token=BOT_TOKEN,
         session=session,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
     # Создание диспетчера

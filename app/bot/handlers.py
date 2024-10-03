@@ -19,10 +19,12 @@ async def start_command(message: types.Message):
     user_sessions[message.from_user.id] = {
         "started": True,
         "context": [],
-        "used_urls": set()
+        "used_urls": set(),
     }
 
-    await message.answer("Привет! Я могу помочь ответить на вопросы о наших проектах и возможностях для ритейлеров.")
+    await message.answer(
+        "Привет! Я могу помочь ответить на вопросы о наших проектах и возможностях для ритейлеров."
+    )
 
 
 # Обработчик команды /help
@@ -84,11 +86,11 @@ async def handle_question(message: types.Message):
     logger.info(f"Sending answer to user {user_id}")
 
     # Отправляем ответ с режимом HTML для корректного отображения ссылок
-    await message.answer(answer, parse_mode='HTML')
+    await message.answer(answer, parse_mode="HTML")
 
 
 # Регистрируем обработчики команд и сообщений
-router.message.register(start_command, Command(commands=['start']))
-router.message.register(help_command, Command(commands=['help']))
-router.message.register(contact_command, Command(commands=['contact']))
+router.message.register(start_command, Command(commands=["start"]))
+router.message.register(help_command, Command(commands=["help"]))
+router.message.register(contact_command, Command(commands=["contact"]))
 router.message.register(handle_question)

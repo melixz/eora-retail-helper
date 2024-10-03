@@ -1,34 +1,14 @@
 import aiohttp
 import html
-import re
 import logging
-from collections import Counter
 from app.llm.gigachat_auth import get_access_token
 from app.utils.ssl_utils import create_ssl_context
+from app.llm.gigachat_formatting import format_answer
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 used_urls_global = set()
-
-
-def remove_extra_digits_around_links(formatted_answer):
-    """
-    Удаляет лишние цифры перед и после гиперссылок, сохраняя корректные ссылки с нумерацией внутри.
-    """
-    formatted_answer = re.sub(r'\d+\s*(<a href="[^"]+">\[\d+\]</a>)', r'\1', formatted_answer)
-    return formatted_answer
-
-
-def validate_formatting(text):
-    """
-    Проверяет, чтобы после каждого номера услуги текст начинался с заглавной буквы и не было лишних цифр перед ссылками.
-    """
-    # Удаляем лишние пробелы перед и после ссылок
-    text = re.sub(r'\s*\[\d+\]\s*', lambda match: match.group().strip(), text)
-    # Преобразуем текст после номеров 1, 2, 3 в заглавную букву
-    text = re.sub(r'(\d\.\s*)([a-zа-яё])', lambda m: m.group(1) + m.group(2).upper(), text)
-    return text
 
 
 async def generate_answer(question, context_with_urls, used_urls):
@@ -41,7 +21,7 @@ async def generate_answer(question, context_with_urls, used_urls):
 
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     context_parts = [content for content, url in context_with_urls]
@@ -63,71 +43,27 @@ async def generate_answer(question, context_with_urls, used_urls):
         "model": "GigaChat",
         "messages": [
             {"role": "system", "content": f"{system_message}\n\nКонтекст:\n{context}"},
-            {"role": "user", "content": question}
-        ]
+            {"role": "user", "content": question},
+        ],
     }
 
     ssl_context = create_ssl_context()
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(url, json=payload, headers=headers, ssl=ssl_context) as response:
+            async with session.post(
+                url, json=payload, headers=headers, ssl=ssl_context
+            ) as response:
                 if response.status != 200:
                     logger.error(f"Error: Received status code {response.status}")
                     text = await response.text()
                     logger.error(f"Response: {text}")
                     return "Извините, произошла ошибка при обработке вашего запроса."
+
                 result = await response.json()
                 answer = result["choices"][0]["message"]["content"]
 
-                answer = html.escape(answer)
-                sentences = re.split(r'(?<=[.!?])\s+', answer)
-
-                new_urls = []
-
-                def extract_keywords(text):
-                    words = re.findall(r'\w+', text.lower())
-                    return Counter(words)
-
-                new_sentences = []
-                for idx, sentence in enumerate(sentences):
-                    if len(new_urls) >= 3:
-                        break
-
-                    max_similarity = 0
-                    best_url = None
-                    sentence_keywords = extract_keywords(sentence)
-
-                    for content, url in context_with_urls:
-                        content_keywords = extract_keywords(content)
-                        common_words = sentence_keywords & content_keywords
-                        similarity = sum(common_words.values())
-                        if similarity > max_similarity and url not in used_urls_global:
-                            max_similarity = similarity
-                            best_url = url
-
-                    if best_url and max_similarity > 0 and best_url not in new_urls:
-                        escaped_url = html.escape(best_url, quote=True)
-                        if f'<code>[{len(new_urls) + 1}]</code>' not in sentence:
-                            sentence = f'{sentence} <code>[{len(new_urls) + 1}]</code>'
-                        new_urls.append((len(new_urls) + 1, escaped_url))
-                        used_urls_global.add(best_url)
-
-                    new_sentences.append(sentence)
-
-                formatted_answer = ' '.join(new_sentences)
-
-                formatted_answer = remove_extra_digits_around_links(formatted_answer)
-
-                formatted_answer = validate_formatting(formatted_answer)
-
-                formatted_answer = re.sub(r'\*\*(.*?)\*\*', r'\1', formatted_answer)
-                formatted_answer = re.sub(r'<b>(.*?)</b>', r'\1', formatted_answer)
-
-                for i, url in new_urls:
-                    formatted_answer = formatted_answer.replace(f'<code>[{i}]</code>', f'<a href="{url}">[{i}]</a>')
-
-                return formatted_answer
+                return format_answer(html.escape(answer), context_with_urls, used_urls)
 
         except aiohttp.ClientConnectorError as e:
             logger.error(f"Connection error: {e}")

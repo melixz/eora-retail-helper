@@ -2,9 +2,11 @@ import ssl
 import os
 import logging
 
-COMBINED_CA_PATH = os.getenv('COMBINED_CA_PATH')
+COMBINED_CA_PATH = os.getenv("COMBINED_CA_PATH")
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
